@@ -1,4 +1,4 @@
-### SRP_Franklin_GLS-MPAs-SIA
+### SRP_Franklin_pre-molt
 Dodino et al. 2024. Understanding the foraging movement patterns of Southern Rockhopper penguins (Eudyptes chrysocome chrysocome) at the utmost oceanic regions of South America, Progress in Oceanograpgy (under review).
 
 This repository contains scripts used in the study of Southern Rockhopper penguins pre-molt foraging trip. 
