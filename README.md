@@ -9,7 +9,7 @@ pre-molt trip: GLS_analysis_SRP_Franklin.R: Script to analyze raw geolocator dat
 
 Plots: Plots_SRP_Franklin_premolt.R: Script to report the penguins distribution.
 
-Marine Protected Areas and Frontal Zone overlaps: SRP_overlaps_data_track_analysis.R: Script to analyze the overlaps between geolocators positions and the MPAs/Polar Frontal Zone.
+Marine Protected Areas and Frontal Zone overlaps: SRP_overlaps_MPAs_PFZ_analysis.R: Script to analyze the overlaps between geolocators positions and the MPAs/Polar Frontal Zone.
 
 Stable isotope analysis: Isotopes_pre-mol_SRP_Franklin.R: Script to analyze the isotopic niche and trophic position of penguins. 
 
