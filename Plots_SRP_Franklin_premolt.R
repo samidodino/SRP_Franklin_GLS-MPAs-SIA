@@ -66,7 +66,7 @@ lat.calib <- -54.7833
 
 # MPAs + Polar Front
 
-plot_premolt_puntos<-baty_plot +
+plot_premolt_points<-baty_plot +
   geom_sf(data = premolt_sf, aes(color = id)) + #pone los colores por id, random eleccion
   geom_point(data = tabla1, aes(x = lon.calib, y = lat.calib), size = 3, shape = 21, fill = "darkred") +
   geom_sf(data = yaganesI, fill = NA, color = "black", size = 12, alpha = 0.5) +
@@ -80,9 +80,9 @@ plot_premolt_puntos<-baty_plot +
   theme(axis.text = element_text(size = 10))
 
 
-print(plot_premolt_puntos)
+print(plot_premolt_points)
 
-plot_premolt_puntos<-baty_plot +
+plot_premolt_points<-baty_plot +
   geom_sf(data = premolt_sf, aes(color = sex)) +
   scale_color_manual(values = c("M" = "violetred", "F" = "springgreen"))+
   geom_point(data = tabla1, aes(x = lon.calib, y = lat.calib), size = 3, shape = 23, fill = "black") +
@@ -97,89 +97,54 @@ plot_premolt_puntos<-baty_plot +
   theme(axis.text = element_text(size = 10))
 
 
-print(plot_premolt_puntos)
+print(plot_premolt_points)
 
-
-
-##### Density map by sex ######
-
-install.packages("rnaturalearthdata")
-library(rnaturalearth)
-
+#####  GLS days from start for each individual + polar front+ marine area ########
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+load("C:/Users/User/Desktop/GLS projectos/Results/Rockhopper_franklin/prob_track/BV342_04Jan21_184313driftadj_probGLS_premolt.RData")
 
+## confident intervals shapes
 
-# Males, normalized (fill=after_stat(ncount))
-data_M_BT <- tabla1 %>% filter(sex == "M")
+prj <- paste0("+proj=aeqd +lat_0=", median(st_coordinates(prob_track[[1]])[, 2]), " +lon_0=", 
+              median(st_coordinates(prob_track[[1]])[, 1]), " +units=km")
+polys <- lapply(c(95, 50, 25), function(x) {
+  probGLS:::calc_mcp(prob_track[[1]][, "step"], percent = x) %>% st_transform(prj) %>% st_union() %>%
+    st_transform(4326)
+})
+doy_colours <- colorRampPalette(
+  paletteer:::paletteer_d("ggthemes::Classic_Cyclic", n = 12)[c(1:12, 1)])(366)
 
-plot_males_BT<-ggplot(data = world) +
-  geom_bin2d(data = data_M_BT, aes(x = lon, y = lat, fill=after_stat(ncount)), binwidth = 1) +
-  geom_sf(fill = gray(0.3), colour = NA) +
-  geom_point(aes(x = lon.calib, y = lat.calib), size = 1.5,
-             shape = 21, fill = "darkred") +
-  geom_sf(data = polar_front,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = yaganesI,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = yaganesII,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = burdwood,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = diego_ramirez,col="black", size=5,fill = NA, alpha = 0.5)+ 
-  coord_sf(xlim=c(-78, -48),ylim=c(-65, -50), expand = FALSE)+
-  scale_fill_continuous(type = "viridis") +
-  labs(title = "Density map - Males - Best track", x = NULL, y = NULL)+
-  theme_light() +
-  theme(axis.text = element_text(size = 10))+
-  annotation_scale(location = "bl")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
-# Females, normalized (fill=after_stat(ncount))
-data_F_BT <- tabla1 %>% filter(sex == "F")
-
-plot_females_BT<-ggplot(data = world) +
-  geom_bin2d(data = data_F_BT, aes(x = lon, y = lat, fill=after_stat(ncount)), binwidth = 1) +
-  geom_sf(fill = gray(0.3), colour = NA) +
-  geom_point(aes(x = lon.calib, y = lat.calib), size = 1.5,
-             shape = 21, fill = "darkred") +
-  geom_sf(data = polar_front,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = yaganesI,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = yaganesII,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = burdwood,col="black", size=5,fill = NA, alpha = 0.5) +
-  geom_sf(data = diego_ramirez,col="black", size=5,fill = NA, alpha = 0.5) +
-  coord_sf(xlim=c(-78, -48),ylim=c(-65, -50), expand = FALSE)+
-  scale_fill_continuous(type = "viridis") +
-  labs(title = "Density map - Females - Best track", x = NULL, y = NULL)+
-  theme_light() +
-  theme(axis.text = element_text(size = 10))+
-  annotation_scale(location = "bl") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
-
-# Combined plot
-combined_plot_BT <- plot_females_BT + plot_males_BT
-combined_plot_BT
-
-
-### Density both sex ####
-
+#plot
 ggplot(data = world) +
-  geom_bin2d(data = tabla1, aes(x = lon, y = lat, fill=after_stat(ncount)), binwidth = 1.5) +
   geom_sf(fill = gray(0.3), colour = NA) +
-  geom_point(aes(x = lon.calib, y = lat.calib), size = 2,
+  geom_sf(data = polys[[1]], aes(geometry = geometry),
+          fill = grey(0.9, alpha = 0.6), col = "transparent") +
+  geom_sf(data = polys[[2]], aes(geometry = geometry),
+          fill = grey(0.8, alpha = 0.6), col = "transparent") +
+  geom_sf(data = polys[[3]], aes(geometry = geometry),
+          fill = grey(0.7, alpha = 0.6), col = "transparent") +
+  
+  geom_sf(data = yaganesI,col=NA, fill = "orange", alpha = 0.5) +
+  geom_sf(data = yaganesII,col=NA, fill = "orange", alpha = 0.5) +
+  geom_sf(data = burdwood,col=NA, fill = "orange", alpha = 0.5) +
+  geom_sf(data = diego_ramirez,col=NA, fill = "orange", alpha = 0.5) +
+  geom_sf(data = polar_front, fill=NA, color="black",size=12, alpha=0.5)
+  geom_sf(data = prob_track[[2]] %>% summarise(do_union = FALSE) %>%
+            st_cast("LINESTRING"), mapping = aes(geometry = geometry), linewidth = 0.4) +
+  geom_sf(data = prob_track[[2]] %>% rowid_to_column(var = "nr"), mapping = aes(geometry = geometry, size = mean.rel_weight, 
+                                                                                fill = as.numeric(nr)/2), shape = 21) +
+  scale_size(range = c(2, 4), name = "Mean.rel_weight") +
+  scale_fill_continuous(type = "viridis", name = "day from start") +
+  
+  geom_point(aes(x = lon.calib, y = lat.calib), size = 3, 
              shape = 21, fill = "darkred") +
-  geom_sf(data = frentes2 %>% filter(NAME %in% c("Polar Front (PF)")), size = 4) +
-  geom_sf(data = yaganesI,col="black", size=4,fill = NA, alpha = 0.5) +
-  geom_sf(data = yaganesII,col="black", size=4,fill = NA, alpha = 0.5) +
-  geom_sf(data = burdwood,col="black", size=4,fill = NA, alpha = 0.5) +
-  geom_sf(data = diego_ramirez,col="black", size=4,fill = NA, alpha = 0.5)+ 
-  coord_sf(xlim=c(-78, -48),ylim=c(-65, -50), expand = FALSE)+
-  scale_fill_continuous(type = "viridis") +
-  labs(title = "Densisty map - ALL - Best track", x = NULL, y = NULL)+
+  coord_sf(xlim = c(-90,-40), ylim = c(-70, -45), expand = FALSE) +
   theme_light() +
-  theme(axis.text = element_text(size = 10))+
-  annotation_scale(location = "bl")+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
+  scale_x_continuous(name="") +
+  scale_y_continuous(name="") +
+  theme(axis.text = element_text(size = 10)) + 
+  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.5, "in"), pad_y =unit(0.5,"in"), style = north_arrow_fancy_orienteering)+
+  annotation_scale(location = "bl")
 
 
 
