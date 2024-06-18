@@ -117,11 +117,8 @@ plot(unique(as.Date(act$dtime)), tapply(act$wetdry,as.Date(act$dtime),sum)/288,
 points(unique(as.Date(act$dtime)),tapply(act$wetdry,as.Date(act$dtime),sum)/288,
        pch=19,cex=0.8)
 
-#speed_dry  = c(17, 4, 30) 
-#speed_wet  = c(1, 1.3, 5)# fastest most likely speed, speed sd and maximum speed allowed when the logger is submerged in sea water
-speed_wet  = c(0.27, 0.2, 1.1)# for winter.datos klemens generales 100km/dia
-#speed_wet  = c(0.27, 0.2, 1.9)# for pre-molt. datos klemens generales con la max de 7km/h veloc crucero lineal
-                              #capaz es mejor este valor para pre-molt?
+speed_wet  = c(0.27, 0.2, 1.9)# for pre-molt
+                             
 
 ## ProbGLS
 particle.num  = 2000
@@ -138,30 +135,6 @@ plot(x$x)
 xlim <- range(x$x[,1]+c(-5,5))
 ylim <- range(x$x[,2]+c(-5,5))
 
-#for winter
-set.seed(100)
-prob_track  <- prob_algorithm(trn                         = trn,
-                              sensor                      = sst_daily[sst_daily$SST.remove==F,],
-                              act                         = act,
-                              tagging.date                = "2020-03-19",
-                              retrieval.date              = as.Date(max(twl$Twilight)),
-                              loess.quartile              = NULL,
-                              tagging.location            = c(lon.calib, lat.calib),
-                              particle.number             = particle.num,
-                              iteration.number            = iteration.num,
-                              sunrise.sd                  = tw,
-                              sunset.sd                   = tw,
-                              range.solar                 = c(-7, -1),
-                              boundary.box                = c(-110, -45, -70, -45), # min lon, max lon, min lat and max lat
-                              #speed.dry                   = speed_dry,
-                              speed.wet                   = speed_wet,
-                              sst.sd                      = 0.5,
-                              max.sst.diff                = 3,
-                              east.west.comp              = T,
-                              land.mask                   = T,
-                              ice.conc.cutoff             = 0.9,
-                              wetdry.resolution           = median(as.numeric(diff(act$dtime))*60),
-                              NOAA.OI.location = "C:/Users/User/Desktop/GLS projectos/SST") #downloand from: https://psl.noaa.gov/data/gridded/data.noaa.oisst.v2.highres.html
 
 #for pre-molt
 speed_wet  = c(0.27, 0.2, 1.9)
@@ -233,87 +206,6 @@ all_track_sf <-
 write.csv(all_track_sf,file = glue::glue("C:/Users/User/Desktop/GLS projectos/Results/{Species}/all_track/BV316_premolt_all_track_2.csv"), row.names = FALSE)
 
 
-###### plot Track #######
-
-#####  GLS points + polar front+ marine area ########
-
-library(ggspatial)
-
-#load("C:/Users/User/Desktop/GLS projectos/Results/Rockhopper_franklin/prob_track/BV342_04Jan21_184313driftadj_probGLS_premolt.RData")
-
-
-#Shapefile with polar front:
-
-frentes2 <- st_read("C:/Users/User/Desktop/GLS projectos/Fronts_of_the_Antarctic_Circumpolar_Current_-_GIS_data/shapefile/antarctic_circumpolar_current_fronts.shp")
-
-frente_polar<-dplyr::filter(frentes2, NAME %in% c("Polar Front (PF)"))
-
-##Shapefiles with marine protected areas
-
-yaganesI<-st_read("C:/Users/User/Desktop/GLS projectos/MarineAreas/Yaganes I.shp")
-yaganesII<-st_read("C:/Users/User/Desktop/GLS projectos/MarineAreas/Yaganes II.shp")
-
-burdwood<-st_read("C:/Users/User/Desktop/GLS projectos/MarineAreas/BB_I-II/BB_I_II_limite_zonificacion.shp")
-
-diego_ramirez<-st_read("C:/Users/User/Desktop/GLS projectos/MarineAreas/Diego_Ramirez/WDPA_WDOECM_Sep2023_Public_555643508_shp-polygons.shp")
-
-## plus track
-
-prj <- paste0("+proj=aeqd +lat_0=", median(st_coordinates(prob_track[[1]])[, 2]), " +lon_0=", 
-              median(st_coordinates(prob_track[[1]])[, 1]), " +units=km")
-polys <- lapply(c(95, 50, 25), function(x) {
-  probGLS:::calc_mcp(prob_track[[1]][, "step"], percent = x) %>% st_transform(prj) %>% st_union() %>%
-    st_transform(4326)
-})
-doy_colours <- colorRampPalette(
-  paletteer:::paletteer_d("ggthemes::Classic_Cyclic", n = 12)[c(1:12, 1)])(366)
-
-
-ggplot(data = world) +
-  geom_sf(fill = gray(0.3), colour = NA) +
-  geom_sf(data = polys[[1]], aes(geometry = geometry),
-          fill = grey(0.9, alpha = 0.6), col = "transparent") +
-  geom_sf(data = polys[[2]], aes(geometry = geometry),
-          fill = grey(0.8, alpha = 0.6), col = "transparent") +
-  geom_sf(data = polys[[3]], aes(geometry = geometry),
-          fill = grey(0.7, alpha = 0.6), col = "transparent") +
-  
-  geom_sf(data = yaganesI,col=NA, fill = "orange", alpha = 0.5) +
-  geom_sf(data = yaganesII,col=NA, fill = "orange", alpha = 0.5) +
-  geom_sf(data = burdwood,col=NA, fill = "orange", alpha = 0.5) +
-  geom_sf(data = diego_ramirez,col=NA, fill = "orange", alpha = 0.5) +
-  geom_sf(data = prob_track[[2]] %>% summarise(do_union = FALSE) %>%
-            st_cast("LINESTRING"), mapping = aes(geometry = geometry), linewidth = 0.4) +
-  
-  geom_sf(data = prob_track[[2]] %>% rowid_to_column(var = "nr"), mapping = aes(geometry = geometry, size = mean.rel_weight, 
-                                                                                fill = as.numeric(nr)/2), shape = 21) +
-  scale_size(range = c(2, 4), name = "Mean.rel_weight") +
-  scale_fill_continuous(type = "viridis", name = "day from start") +
-  
-  geom_point(aes(x = lon.calib, y = lat.calib), size = 3, 
-             shape = 21, fill = "darkred") +
-  geom_sf(data = frentes2 %>% filter(NAME %in% c("Polar Front (PF)", "Subantarctic Front (SAF)")), aes(linetype = NAME, color = NAME), size = 3) +
-  coord_sf(xlim = c(-90,-40), ylim = c(-70, -45), expand = FALSE) +
-  theme_light() +
-  scale_x_continuous(name="") +
-  scale_y_continuous(name="") +
-  theme(axis.text = element_text(size = 10)) + 
-  annotation_north_arrow(location = "br", which_north = "true", pad_x = unit(0.5, "in"), pad_y =unit(0.5,"in"), style = north_arrow_fancy_orienteering)+
-  annotation_scale(location = "bl")+
-  geom_text(aes(x = -70.6, y = -48, label = "S\nO\nU\nT\nH\n\nA\nM\nE\nR\nI\nC\nA"), color = "white", size = 1.35)+
-  
-  scale_linetype_manual(values = c("Polar Front (PF)" = 5, "Subantarctic Front (SAF)" = 5), 
-                        labels = c("Polar Front (PF)" = "Polar Front", "Subantarctic Front (SAF)" = "Subantarctic Front"),
-                        guide = guide_legend(override.aes = list(size = 2.5))) +
-  
-  scale_color_manual(values = c("Polar Front (PF)" = "blue", "Subantarctic Front (SAF)" = "red"), 
-                     labels = c("Polar Front (PF)" = "Polar Front", "Subantarctic Front (SAF)" = "Subantarctic Front")) +
-  
-  labs(linetype = "Fronts", color = "Fronts") +
-  theme(legend.position = "right")
-
-
-
 ##### ALL TRACKS in one file ######
 
 library(dplyr)
@@ -369,7 +261,7 @@ BV342 <- BV342[, c("dtime", "lon", "lat", "id")]
 BV344 <- BV344[, c("dtime", "lon", "lat", "id")]
 
 
-datos_totales <- rbind(BV316, BV318, BV319,
+merge_tracks <- rbind(BV316, BV318, BV319,
                        BV328, BV330,BV332, 
                        BV334, BV335,BV337,
                        BV338, BV339,BV341,
@@ -386,14 +278,11 @@ sex_data <- data.frame(
 )
 
 
-datos_totales <- left_join(datos_totales, sex_data, by = "id")
+merge_tracks <- left_join(merge_tracks, sex_data, by = "id")
 
 
 
-write.csv(datos_totales, "datos_agrupados_pre-molt_withSex.csv", row.names = FALSE)
-
-write.csv(datos_totales, "C:/Users/User/Desktop/GLS projectos/PPA_Franklin/Results/datos_agrupados_pre-molt.csv", row.names = FALSE)
-
+write.csv(merge_tracks, "datos_agrupados_pre-molt_withSex.csv", row.names = FALSE)
 
 ###### merge .csv of all tracks in one file #####
 
@@ -447,7 +336,7 @@ BV342 <- BV342[, c("type", "lon", "lat", "id")]
 BV344 <- BV344[, c("type", "lon", "lat", "id")]
 
 
-datos_totales <- rbind(BV316, BV318, BV319,
+merge_tracks <- rbind(BV316, BV318, BV319,
                        BV328, BV330,BV332, 
                        BV334, BV335,BV337,
                        BV338, BV339,BV341,
@@ -464,8 +353,8 @@ sex_data <- data.frame(
 )
 
 
-datos_totales <- left_join(datos_totales, sex_data, by = "id")
+merge_tracks <- left_join(merge_tracks, sex_data, by = "id")
 
-write.csv(datos_totales, "C:/Users/User/Desktop/GLS projectos/PPA_Franklin/Results/datos_agrupados_pre-molt_all_track.csv", row.names = FALSE)
+write.csv(merge_tracks, "datos_agrupados_pre-molt_all_track.csv", row.names = FALSE)
 
 
