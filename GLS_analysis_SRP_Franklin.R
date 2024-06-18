@@ -282,7 +282,7 @@ merge_tracks <- left_join(merge_tracks, sex_data, by = "id")
 
 
 
-write.csv(merge_tracks, "datos_agrupados_pre-molt_withSex.csv", row.names = FALSE)
+write.csv(merge_tracks, "merge_tracks_pre-molt_best_track_withSex.csv", row.names = FALSE)
 
 ###### merge .csv of all tracks in one file #####
 
@@ -355,6 +355,6 @@ sex_data <- data.frame(
 
 merge_tracks <- left_join(merge_tracks, sex_data, by = "id")
 
-write.csv(merge_tracks, "datos_agrupados_pre-molt_all_track.csv", row.names = FALSE)
+write.csv(merge_tracks, "merge_tracks_pre-molt_all_track.csv", row.names = FALSE)
 
 
