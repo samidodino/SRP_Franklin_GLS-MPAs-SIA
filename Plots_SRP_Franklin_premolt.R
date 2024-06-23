@@ -6,9 +6,7 @@
 library(ggplot2)
 library(dplyr)
 library(ggspatial)
-library(patchwork)
 library(sf)
-library(raster)
 library(marmap)
 
 ### best tracks
