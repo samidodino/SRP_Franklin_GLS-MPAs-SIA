@@ -9,7 +9,6 @@ library(ggspatial)
 library(patchwork)
 library(sf)
 library(raster)
-library(RColorBrewer)
 library(marmap)
 
 ### best tracks
