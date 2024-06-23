@@ -1,5 +1,5 @@
 ### SRP_Franklin_pre-molt
-Dodino et al. 2024. Understanding the foraging movement patterns of Southern Rockhopper penguins (Eudyptes chrysocome chrysocome) at the utmost oceanic regions of South America, Progress in Oceanograpgy (under review).
+Dodino et al. 2024. Pre-molt foraging movement patterns of Southern Rockhopper penguins (Eudyptes chrysocome chrysocome) at the southernmost oceanic regions of South America, Progress in Oceanograpgy (under review).
 
 This repository contains scripts used in the study of Southern Rockhopper penguins pre-molt foraging trip. 
 At the South Atlantic Ocean, four MPAs have been created and in this study, we evaluate the spatial use of them by Southern Rockhopper penguins from Isla de los Estados, Argentina. We combined geolocation sensor data and spatial analysis together with stable isotopes analysis (δ13C and δ15N) to assess their spatial and trophic niches during the pre-molt period.
